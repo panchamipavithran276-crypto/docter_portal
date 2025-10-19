@@ -1,0 +1,14 @@
+# Django web framework
+django==3.2.25
+
+# Joblib for model serialization
+joblib==1.2.0
+
+# Scikit-learn for machine learning
+scikit-learn==1.0.2
+
+# NumPy for numerical computations
+numpy==1.23.5
+
+# PostgreSQL connector (binary version avoids compilation)
+psycopg2-binary==2.9.11
