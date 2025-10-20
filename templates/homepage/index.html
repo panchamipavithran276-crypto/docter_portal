@@ -1,271 +1,415 @@
-﻿
-{% extends "basic.html" %}
+﻿{% extends "basic.html" %}
 {% load static %}
 
- 
-	{% block head %}
+{% block head %}
+<style>
+:root {
+    --primary-color: #4f46e5;
+    --primary-hover: #4338ca;
+    --text-dark: #1f2937;
+    --text-light: #6b7280;
+    --bg-light: #f9fafb;
+    --border-color: #e5e7eb;
+}
 
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+/* Hero Section */
+.hero {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 80px 24px;
+    text-align: center;
+}
+
+.hero h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 24px;
+    letter-spacing: -0.02em;
+}
+
+.hero p {
+    font-size: clamp(1rem, 2vw, 1.125rem);
+    color: var(--text-light);
+    max-width: 700px;
+    margin: 0 auto 40px;
+    line-height: 1.8;
+}
+
+.cta-button {
+    display: inline-block;
+    background: var(--primary-color);
+    color: white;
+    padding: 14px 32px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.cta-button:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+}
+
+/* Sign In Section */
+.signin-section {
+    max-width: 800px;
+    margin: 60px auto;
+    padding: 0 24px;
+}
+
+.section-title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 48px;
+    color: var(--text-dark);
+}
+
+.role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 32px;
+    margin-bottom: 48px;
+}
+
+.role-card {
+    text-align: center;
+    padding: 32px 24px;
+    border-radius: 16px;
+    background: white;
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: var(--text-dark);
+}
+
+.role-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-4px);
+}
+
+.role-card img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 16px;
+}
+
+.role-card h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+/* Doctors Section */
+.doctors-section {
+    background: var(--bg-light);
+    padding: 80px 24px;
+}
+
+.doctors-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.doctors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 32px;
+    margin-top: 48px;
+}
+
+.doctor-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.doctor-card:hover {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+}
+
+.doctor-image {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+}
+
+.doctor-info {
+    padding: 24px;
+}
+
+.doctor-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text-dark);
+}
+
+.doctor-address {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    line-height: 1.6;
+}
+
+/* Footer */
+.footer {
+    background: var(--text-dark);
+    color: white;
+    padding: 48px 24px 32px;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.footer h4 {
+    font-size: 1.125rem;
+    margin-bottom: 24px;
+    font-weight: 600;
+}
+
+.footer-links {
+    list-style: none;
+    margin-bottom: 24px;
+}
+
+.footer-links li {
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    color: #d1d5db;
+}
+
+.footer-bottom {
+    text-align: center;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: #9ca3af;
+    font-size: 0.9rem;
+}
+
+/* Modal Styles */
+.modal-content {
+    border-radius: 16px;
+    border: none;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--border-color);
+    padding: 24px;
+}
+
+.modal-body {
+    padding: 32px 24px;
+}
+
+.modal-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    text-align: center;
+    width: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero {
+        padding: 60px 20px;
+    }
+    
+    .role-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .doctors-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .section-title {
+        font-size: 1.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero h1 {
+        font-size: 1.75rem;
+    }
+    
+    .cta-button {
+        width: 100%;
+        padding: 16px 32px;
+    }
+}
+</style>
 {% endblock %}
-
-
-
 
 {% block body %}
 
+{% if user.is_authenticated %}
+    <!-- Authenticated user content -->
+{% else %}
 
-    
-<div class="jumbotron">
-    <h1 class="display-4">Be your own doctor...</h1>
-    <p class="lead">
-            It might have happened so many times that you or someone yours need doctor’s help immediately,
-             but they are not available due to some reasons.The Disease Prediction system is an end user
-              support and online consultation project. Here, we propose a web application that allow users 
-              to get instant guidance on their disease through an intelligent system. The application is 
-              fed with various details and the disease associated with those details.The application allows
-               user to share their disease related issues.It then processes user specific details to check 
-               for various illness that could be associated with it.Here we use some intelligent data mining
-                techniques to guess the most accurate illness that could be associated with patient’s details.
-                Based on result, patient can contact doctor accordingly for further treatment.
-    
-                
-  
-     {% if user.is_authenticated %}
+<!-- Hero Section -->
+<section class="hero">
+    <h1>Be Your Own Doctor</h1>
+    <p>
+        Get instant guidance on your health concerns through our intelligent disease prediction system. 
+        Share your symptoms and receive accurate insights to help you make informed decisions about your healthcare.
+    </p>
+    <button type="button" class="cta-button" data-toggle="modal" data-target="#signinModal">
+        Get Started
+    </button>
+</section>
 
-     
-     {% else %}
-
-      <p class="lead">
-      <button type="button" class="btn btn-primary btn-lg"  data-toggle="modal" data-target=".bd-example-modal-lg">Get started</button>
-      </p>
-    
-
-</div>
-
-<br><br><br>
-<div class="container mt-5 mb-3" style="width:fit-content;">
-      <center>
-        <h1>Sign-In  As</h1>
-        </center>
-      
-      
-      <form>
-          <div class="container mt-5 mb-5">
-       <div class="row">
-          <div class="col">
-             <a href="{% url 'sign_in_admin' %}">
-      <img  alt="admin" src="{% static 'homepage/admin.png' %}"  class="img">
-      </a>
-          </div>
-      
-          <div class="col">
-      <a href="{% url 'sign_in_doctor' %}">
-      <img  alt="doctor" src="{% static 'homepage/doctor.png' %}"  class="img">
-      </a>
-          </div>
-      
-          <div class="col">
-      <a href="{% url 'sign_in_patient' %}">
-      <img  alt="patient" src="{% static 'homepage/patient.png' %}"  class="img">
-      </a>
-          </div>
-        </div>
-        </div>
-      </form>
-</div>
-
-
-    
-
-    {% endif %}
-
-<br><br>
-
-
-
-
-<!-- Large modal -->
-
-<div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-   
-<center>
-  <h1>Sign-In  As</h1>
-  </center>
-<br><br>
-
-<center>
-<form>
-    <div class="container mt-5 mb-5">
- <div class="row">
-    <div class="col">
-       <a href="{% url 'sign_in_admin' %}">
-<img  alt="admin" src="{% static 'homepage/admin.png' %}"  class="img">
-</a>
+<!-- Sign In Section (Visible on page) -->
+<section class="signin-section">
+    <h2 class="section-title">Sign In As</h2>
+    <div class="role-grid">
+        <a href="{% url 'sign_in_admin' %}" class="role-card">
+            <img src="{% static 'homepage/admin.png' %}" alt="Admin">
+            <h3>Admin</h3>
+        </a>
+        <a href="{% url 'sign_in_doctor' %}" class="role-card">
+            <img src="{% static 'homepage/doctor.png' %}" alt="Doctor">
+            <h3>Doctor</h3>
+        </a>
+        <a href="{% url 'sign_in_patient' %}" class="role-card">
+            <img src="{% static 'homepage/patient.png' %}" alt="Patient">
+            <h3>Patient</h3>
+        </a>
     </div>
+</section>
 
-    <div class="col">
-<a href="{% url 'sign_in_doctor' %}">
-<img  alt="doctor" src="{% static 'homepage/doctor.png' %}"  class="img">
-</a>
-    </div>
+{% endif %}
 
-    <div class="col">
-<a href="{% url 'sign_in_patient' %}">
-<img  alt="patient" src="{% static 'homepage/patient.png' %}"  class="img">
-</a>
-    </div>
-  </div>
-  </div>
-</form>
-</center>
-
-    </div>
-  </div>
-</div>
-
-
-
-
-
-
-
-<!-- Large modal -->
-
-<div class="modal fade bd-example-modal-lg2" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-   
-<center>
-  <h1>Sign-Up  As</h1>
-  </center>
-<br><br>
-
-<center>
-<form>
-    <div class="container mt-5 mb-5 ml-5 mr-5">
- <div class="row">
-
-    <div class="col">
-<a href="{% url 'signup_doctor' %}">
-<img  alt="doctor" src="{% static 'homepage/doctor.png' %}"  class="img">
-</a>
-    </div>
-
-    <div class="col">
-<a href="{% url 'signup_patient' %}">
-<img  alt="patient" src="{% static 'homepage/patient.png' %}"  class="img">
-</a>
-    </div>
-  </div>
-  </div>
-</form>
-</center>
-
-    </div>
-  </div>
-</div>
-
-
-
-
-
-<br><br><br><br>
-<center><h2>Our Doctors</h2></center>
-<div class="row mt-5 mb-5">
-    <div class="col">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5 class="card-title">Dr. MANISH BANSAL </h5>
-                <img  alt="admin" src="{% static 'homepage/c31.jpg' %}" width="200" height="150" class="rounded">
-                <p class="card-text">H.No-1283, Ward No-14, New Anaz Mandi Road, P.O-Radaur, Distt. Yamuna Nagar - 135133, (Haryana).</p>
-                
+<!-- Doctors Section -->
+<section class="doctors-section">
+    <div class="doctors-container">
+        <h2 class="section-title">Our Doctors</h2>
+        <div class="doctors-grid">
+            <div class="doctor-card">
+                <img src="{% static 'homepage/c31.jpg' %}" alt="Dr. Manish Bansal" class="doctor-image">
+                <div class="doctor-info">
+                    <h3 class="doctor-name">Dr. Manish Bansal</h3>
+                    <p class="doctor-address">H.No-1283, Ward No-14, New Anaz Mandi Road, P.O-Radaur, Distt. Yamuna Nagar - 135133, Haryana</p>
+                </div>
+            </div>
+            <div class="doctor-card">
+                <img src="{% static 'homepage/c41.jpg' %}" alt="Dr. Bansal Jatinder Paul" class="doctor-image">
+                <div class="doctor-info">
+                    <h3 class="doctor-name">Dr. Bansal Jatinder Paul</h3>
+                    <p class="doctor-address">Om Niwas Khai Basti, Khai Road, Lehragaga-148031, Distt. Sangrur, Punjab</p>
+                </div>
+            </div>
+            <div class="doctor-card">
+                <img src="{% static 'homepage/s72.jpg' %}" alt="Dr. Radhika Swaroop" class="doctor-image">
+                <div class="doctor-info">
+                    <h3 class="doctor-name">Dr. Radhika Swaroop</h3>
+                    <p class="doctor-address">Swaroop Hospital, 1, Hawa Sarak, Civil Lines, Jaipur-302 019</p>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5 class="card-title">Dr. BANSAL JATINDER PAUL </h5>
-                <img  alt="admin" src="{% static 'homepage/c41.jpg' %}" width="200" height="150" class="rounded">
-                <p class="card-text">Om Niwas Khai Basti, Khai Road, Lehragaga-148031, Distt. Sangrur, Punjab.</p>
-                
-            </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="footer-content">
+        <h4>Contact Us</h4>
+        <ul class="footer-links">
+            <li>Email: panchami@gmail.com</li>
+            <li>Phone: 8587864347</li>
+            <li>Address: KER, Bhubaneswar</li>
+        </ul>
+        <div class="footer-bottom">
+            © 2025 Predico.com. All rights reserved.
         </div>
     </div>
-    <div class="col">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5 class="card-title">DR. RADHIKA SWAROOP</h5>
-                <img  alt="admin" src="{% static 'homepage/s72.jpg' %}" width="200" height="150" class="rounded">
-                <p class="card-text">Swaroop Hospital, 1, Hawa Sarak, Civil Lines, # Jaipur-302 019.</p>
-                
+</footer>
+
+<!-- Sign In Modal -->
+<div class="modal fade" id="signinModal" tabindex="-1" role="dialog" aria-labelledby="signinModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="signinModalLabel">Sign In As</h2>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="role-grid">
+                    <a href="{% url 'sign_in_admin' %}" class="role-card">
+                        <img src="{% static 'homepage/admin.png' %}" alt="Admin">
+                        <h3>Admin</h3>
+                    </a>
+                    <a href="{% url 'sign_in_doctor' %}" class="role-card">
+                        <img src="{% static 'homepage/doctor.png' %}" alt="Doctor">
+                        <h3>Doctor</h3>
+                    </a>
+                    <a href="{% url 'sign_in_patient' %}" class="role-card">
+                        <img src="{% static 'homepage/patient.png' %}" alt="Patient">
+                        <h3>Patient</h3>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 </div>
-  
 
-<br><br><br><br>
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-    <div id="footer" class="card bg-dark text-white">
-      <div class="card-body">
-        Contact-
-     
-    <ul >
-     
-      <li >
-        <h5 class="mb-1">Email: panchami@gmail.com</h5>
-      </li>
-      <li >
-        <h5 class="mb-1">Contact no. 8587864347</h5>
-      </li>
-      <li >
-        <h5 class="mb-1">Address: KER, bbsr</h5>
-        <div class="footer-copyright text-center">© 2025 Copyright:
-          <a href="#"> Predico.com</a>
+<!-- Sign Up Modal -->
+<div class="modal fade" id="signupModal" tabindex="-1" role="dialog" aria-labelledby="signupModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="signupModalLabel">Sign Up As</h2>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="role-grid">
+                    <a href="{% url 'signup_doctor' %}" class="role-card">
+                        <img src="{% static 'homepage/doctor.png' %}" alt="Doctor">
+                        <h3>Doctor</h3>
+                    </a>
+                    <a href="{% url 'signup_patient' %}" class="role-card">
+                        <img src="{% static 'homepage/patient.png' %}" alt="Patient">
+                        <h3>Patient</h3>
+                    </a>
+                </div>
+            </div>
         </div>
-      </li>
-      
-    </ul>
-  </div>
-  </div>
-
-  
- 
-
-
-
-
-
+    </div>
 </div>
 
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 
-
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-  
-    
-
-
-
-
-    
 {% endblock %}

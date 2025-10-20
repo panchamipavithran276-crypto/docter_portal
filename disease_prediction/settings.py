@@ -9,7 +9,8 @@ https://docs.djangoproject.com/en/2.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
-
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module='sklearn')
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -27,6 +28,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# Authentication settings
+LOGIN_URL = '/accounts/sign_in_patient/'  # Use your actual patient sign-in URL
+LOGIN_REDIRECT_URL = '/stress-analysis/dashboard/'
+LOGOUT_REDIRECT_URL = '/'
 
 # Application definition
 
@@ -40,8 +45,29 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'stress_analysis.apps.StressAnalysisConfig',
+    # 'sslserver'
     
 ]
+
+
+SECURE_SSL_REDIRECT = False  # Let sslserver handle this
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# Google Fit API Configuration
+# Google Fit Configuration
+# Google Fit Configuration
+GOOGLE_FIT_CONFIG = {
+    'CLIENT_SECRET_FILE': os.path.join(BASE_DIR, 'client_secret.json'),
+    'SCOPES': [
+        'https://www.googleapis.com/auth/fitness.activity.read',
+        'https://www.googleapis.com/auth/fitness.heart_rate.read',
+        'https://www.googleapis.com/auth/fitness.sleep.read',
+        'https://www.googleapis.com/auth/fitness.body.read'
+    ],
+    'REDIRECT_URI': 'http://localhost:8000/stress-analysis/google-fit-callback/'  # Use HTTP for development
+}
 
 # Use BigAutoField for auto-created primary keys by default (silence W042 warnings)
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

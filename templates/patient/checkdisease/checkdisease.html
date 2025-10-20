@@ -1,328 +1,556 @@
-
-
 {% extends "basic.html" %}
 {% load static %}
 
- 
-    {% block head %}
+{% block head %}
+<style>
+:root {
+    --primary-color: #4f46e5;
+    --primary-hover: #4338ca;
+    --success-color: #10b981;
+    --danger-color: #ef4444;
+    --warning-color: #f59e0b;
+    --text-dark: #1f2937;
+    --text-light: #6b7280;
+    --bg-light: #f9fafb;
+    --border-color: #e5e7eb;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
 
-    <link rel="stylesheet" type="text/css" href="{% static 'patient/checkdisease/dps.css' %}">   
- 
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: var(--bg-light);
+    color: var(--text-dark);
+}
 
+.page-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 48px;
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 16px;
+    line-height: 1.3;
+}
+
+.add-symptom-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.add-symptom-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+}
+
+/* Dropdown Styles */
+.drop-content {
+    display: none;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    margin: 24px 0;
+    overflow: hidden;
+    max-height: 400px;
+    border: 2px solid var(--border-color);
+}
+
+.drop-content.show {
+    display: block;
+}
+
+.searchbardiv {
+    padding: 16px;
+    border-bottom: 2px solid var(--border-color);
+    background: var(--bg-light);
+}
+
+.searchbar {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.searchbar:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+#container-dropdown {
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.dropdown-item {
+    display: block;
+    padding: 12px 16px;
+    color: var(--text-dark);
+    cursor: pointer;
+    border-radius: 6px;
+    margin: 4px 0;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.dropdown-item:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateX(4px);
+}
+
+/* Symptoms Card */
+#symptoms-box {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    border: 2px solid var(--border-color);
+    overflow: hidden;
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--primary-color), #6366f1);
+    color: white;
+    padding: 16px 24px;
+    font-weight: 600;
+    font-size: 1.125rem;
+    border: none;
+}
+
+.card-body {
+    padding: 24px;
+    min-height: 150px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+    align-content: flex-start;
+    max-width: 100%;
+}
+
+.symptoms {
+    background: linear-gradient(135deg, var(--primary-color), #6366f1);
+    color: white;
+    padding: 10px 36px 10px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    display: inline-block;
+    margin: 4px;
+    border: none;
+    font-weight: 500;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.symptoms:hover {
+    background: linear-gradient(135deg, var(--danger-color), #f87171);
+    transform: scale(1.05);
+}
+
+.symptoms::after {
+    content: "×";
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.3rem;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.card-footer {
+    background: var(--bg-light);
+    padding: 16px 24px;
+    border-top: 2px solid var(--border-color);
+}
+
+.btn-success {
+    background: var(--success-color);
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+/* Result Card */
+#predicted-data {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    padding: 32px 24px;
+    border: 2px solid var(--border-color);
+}
+
+.diseasefield {
+    font-size: 1.125rem;
+    color: var(--text-dark);
+    font-weight: 500;
+    display: inline-block;
+    margin: 8px 0;
+}
+
+#diseasefield {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--success-color) !important;
+    text-shadow: none !important;
+}
+
+.progress {
+    height: 32px;
+    border-radius: 8px;
+    background: var(--bg-light);
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, var(--success-color), #34d399);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    transition: width 1s ease;
+}
+
+.info-card {
+    background: #fffbeb;
+    border: 2px solid #fbbf24;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 32px 0;
+}
+
+.info-card h4 {
+    color: var(--text-dark);
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.6;
+    margin-bottom: 8px;
+}
+
+.btn-outline-success {
+    background: white;
+    color: var(--success-color);
+    border: 2px solid var(--success-color);
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-outline-success:hover {
+    background: var(--success-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.btn-outline-success a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+    color: white;
+}
+
+#diseasesearch {
+    color: var(--danger-color) !important;
+    font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-container {
+        padding: 24px 16px;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+    }
+    
+    .card-body {
+        padding: 16px;
+    }
+    
+    #predicted-data {
+        padding: 24px 16px;
+    }
+    
+    .diseasefield {
+        font-size: 1rem;
+    }
+    
+    #diseasefield {
+        font-size: 1.5rem;
+    }
+}
+
+/* Scrollbar Styling */
+#container-dropdown::-webkit-scrollbar {
+    width: 8px;
+}
+
+#container-dropdown::-webkit-scrollbar-track {
+    background: var(--bg-light);
+}
+
+#container-dropdown::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+#container-dropdown::-webkit-scrollbar-thumb:hover {
+    background: var(--text-light);
+}
+</style>
 
 <script>
-
-  /* When the user clicks on the button,
-toggle between hiding and showing the dropdown content */
 function Functionshow() {
-  
-  document.getElementById("searchbar").value = '';
-  document.getElementById("myDropdown").classList.toggle("show");
-   search_symptoms();
-  
+    document.getElementById("searchbar").value = '';
+    document.getElementById("myDropdown").classList.toggle("show");
+    search_symptoms();
 }
 
-
-// Close the dropdown menu if the user clicks outside of it
 window.onclick = function(event) {
-  if (!event.target.matches('.btn')) {
-    if (!event.target.matches('.searchbardiv')){
-      if (!event.target.matches('.searchbar')){
-
-    var dropdowns = document.getElementsByClassName("drop-content");
-    var i;
-    for (i = 0; i < dropdowns.length; i++) {
-      
-      var openDropdown = dropdowns[i];
-      if (openDropdown.classList.contains('show')) {
-        openDropdown.classList.remove('show');
-      }
+    if (!event.target.matches('.add-symptom-btn')) {
+        if (!event.target.matches('.searchbardiv')) {
+            if (!event.target.matches('.searchbar')) {
+                var dropdowns = document.getElementsByClassName("drop-content");
+                var i;
+                for (i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
     }
-  }
-}
-}
 }
 
-  function Functionsymptoms(name) {
-    var newItem = document.createElement("TEXTAREA");
+function Functionsymptoms(name) {
+    var newItem = document.createElement("DIV");
     newItem.innerText = name;
-    newItem.setAttribute("id","symptoms");
+    newItem.setAttribute("class", "symptoms");
     
-    newItem.setAttribute("class","symptoms");
+    // Add click to remove
+    newItem.onclick = function() {
+        this.remove();
+    };
+    
     document.getElementById("sympbox").appendChild(newItem);
-    
-  }
+}
 
- 
-  //var elements = document.getElementsByClassName("symptoms");
-
-
-  function search_symptoms() { 
-    let input = document.getElementById('searchbar').value 
-    input=input.toLowerCase(); 
+function search_symptoms() { 
+    let input = document.getElementById('searchbar').value;
+    input = input.toLowerCase(); 
     let x = document.getElementsByClassName('dropdown-item'); 
       
     for (i = 0; i < x.length; i++) {  
         if (!x[i].innerHTML.toLowerCase().includes(input)) { 
-            x[i].style.display="none"; 
+            x[i].style.display = "none"; 
         } 
         else { 
-            x[i].style.display="inline-block";                  
+            x[i].style.display = "block";                  
         } 
     } 
-} 
+}
 
+$(document).ready(function() {
+    $("#predict").click(function(event) {
+        event.preventDefault();
 
-$(document).ready( function(){
+        var symptoms = document.getElementsByClassName("symptoms");
+        var noofsym = symptoms.length;
+        var symlist = [];
 
+        if (noofsym == 0) {
+            alert("Please add some symptoms");
+            return;
+        }
 
-$("#predict").click(function () {
-  event.preventDefault();
+        for (i = 0; i < symptoms.length; i++) {
+            symlist[i] = symptoms[i].innerText;
+        }
 
-  var symptoms = document.getElementsByClassName("symptoms");
-  var noofsym = symptoms.length;
-  var symlist=[];
+        $("#resultdiv").show("slow");
+        $('html,body').animate({
+            scrollTop: $("#resultdiv").offset().top
+        }, 'slow');
 
-  if(noofsym == 0){
-     alert(" please add some symptoms ");
-  }
+        $.ajax({
+            url: 'checkdisease',
+            type: "POST",
+            data: { 
+                "noofsym": noofsym,
+                "symptoms": symlist,
+                csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+            },
+            dataType: 'json',
+            success: function(data) {
+                document.getElementById('diseasefield').innerText = data["predicteddisease"];
+                document.getElementById('percentage').innerText = data["confidencescore"] + "%";
+                
+                var percent = data["confidencescore"];
+                var disease = data["predicteddisease"];
 
-  else {
-
-  for(i=0;i<symptoms.length;i++){
-    symlist[i]=symptoms[i].value;
-  }
-  
-
-
-  $("#resultdiv").show("slow");
-  $('html,body').animate({
-    scrollTop: $("#resultdiv").offset().top},
-    'slow');
-       
-
-
-
-  $.ajax({
-      url: 'checkdisease',
-      type: "POST",
-      data: { "noofsym" : noofsym,
-              "symptoms" :symlist,
-              csrfmiddlewaretoken : $('input[name=csrfmiddlewaretoken]').val()
-      },
-      dataType: 'json',
-
-      success: function (data) {
-        document.getElementById('diseasefield').innerText = data["predicteddisease"];
-        document.getElementById('percentage').innerText = data["confidencescore"]+"%";
-        percent=data["confidencescore"];
-        disease=data["predicteddisease"];
-
-        $('#percentage').css('width', percent + "%");
-
-        document.getElementById('diseasesearch').innerText = data["predicteddisease"];
-
-        $("#href").attr("href","https://www.google.com/search?q="+ disease +"");
-
-        
-        document.getElementById('consultdoctor').innerText = data["consultdoctor"];
-
-      }
-      
+                $('#percentage').css('width', percent + "%");
+                document.getElementById('diseasesearch').innerText = data["predicteddisease"];
+                $("#href").attr("href", "https://www.google.com/search?q=" + disease);
+                document.getElementById('consultdoctor').innerText = data["consultdoctor"];
+            }
+        });
     });
-
-  }
-
-  });
-
-
-
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 </script>
-
-
-
 {% endblock %}
 
-
-
-
-
-
-
-
-
 {% block body %}
-
-
-
-
-
-<div class="container">
-      <!-- 
-  
-  <div class="dropdown">
-    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-      Dropdown button
-    </button>
-    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-      <a class="dropdown-item" href="#">Action</a>
-      <a class="dropdown-item" href="#">Another action</a>
-      <a class="dropdown-item" href="#">Something else here</a>
+<div class="page-container">
+    <!-- Header Section -->
+    <div class="page-header">
+        <h1 class="page-title">Identify possible conditions and treatment related to your symptoms</h1>
+        <button onclick="Functionshow()" class="add-symptom-btn">
+            <span>➕</span> Add Symptoms
+        </button>
     </div>
-  </div> -->
 
-
-  <div class="container">
-    <br>
-    <div class="text-center"> 
-      <h3>
-          Identify possible conditions and treatment related to your symptoms.
-      </h3><br>
-            <button onclick="Functionshow()" class="btn btn-primary dropdown-toggle">Add symptoms</button>
-    </div>
-  </div >
-
-  <div id="myDropdown" class="drop-content">
-
+    <!-- Symptoms Dropdown -->
+    <div id="myDropdown" class="drop-content">
         <div id="searchbardiv" class="searchbardiv">    
-      
             <input id="searchbar" class="searchbar" onkeyup="search_symptoms()" type="text"
-              name="search" placeholder=" Search symptoms.. "> <br>
+                name="search" placeholder="🔍 Search symptoms...">
         </div> 
 
-        <div class="container" id="container-dropdown">
+        <div id="container-dropdown">
             {% for i in list2 %}
-            
             <a class="dropdown-item" onclick="Functionsymptoms(this.textContent)">{{i}}</a>
-            
             {% endfor %}
         </div>
-  </div>
-        
-      
-    
+    </div>
 
-
-<!-- 
-
-<div class="dropdown">
-  
-    <button onclick="Functionshow()" class="dropbtn">Add symptoms</button>
-      
-  </div >
-    <div id="myDropdown" class="dropdown-content">
-
-     <div id="searchbardiv" class="searchbardiv">    
-      
-    <input id="searchbar" class="searchbar" onkeyup="search_symptoms()" type="text"
-    name="search" placeholder=" Search symptoms.. "> <br>
-  </div> 
-  <div>
-            {% for i in list2 %}
-            
-            <a class="links" onclick="Functionsymptoms(this.textContent)">{{i}}</a>
-            
-            {% endfor %}
-  </div>
+    <!-- Symptoms List Card -->
+    <div class="text-center">
+        <div class="card" id="symptoms-box">
+            {% csrf_token %}
+            <div class="card-header">Selected Symptoms</div>
+            <div class="card-body" id="sympbox">
+                <p style="color: var(--text-light); margin: 0;">Click on symptoms to remove them</p>
+            </div>
+            <div class="card-footer">
+                <button id="predict" class="btn btn-success">🔍 Predict Disease</button>
+            </div>
         </div>
-       -->
-    
-<br><br>
-  <div class="text-center">
-        <div class="card" id= "symptoms-box">
-    
-      {% csrf_token %}
-            <div class="card-header">Symptoms list -</div>
-                    <div class="card-body" id="sympbox" >
-                    </div>
-                          <br>
-                          <div class="card-footer">
-                                <button id="predict" class="btn btn-success">Predict</button>
-                          </div>
-             </div>
-        </div>
-  </div>
+    </div>
 
-  <br>
-
-  <div id="resultdiv" style="display: none;" >
-        <div class="text-center">
-              <div class="card" id="predicted-data">
-                    <div>
-                            <span class="diseasefield" >Patient name : {{ user.patient.name }}</span>
-                            <span class="diseasefield" >&nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp Age : {{ user.patient.age }} </span>
-                    </div>
-                    <span class="diseasefield" >predicted disease is : </span><span class="diseasefield" id="diseasefield" style="color: #092700; text-shadow: 2px 2px 4px rgb(36, 255, 45);"></span> <br>
-                    <br>
-                    <span class="diseasefield">confidence score of :  </span>
-                    <span>
-                          <div class="progress" style="display: inline-block;width:140px">
-                              <div id="percentage" class="progress-bar" style="width: 0%">0%
-                              </div>
-                          </div>
-                    </span>
-
-                    </div>
-              </div>
-
-        <div class="text-center mt-4 mb-4"> 
-              <button class="btn btn-outline-success">
-                    <a id="href" href="https://www.google.com/search?q=anuj" target="_blank" rel="noopener noreferrer">Click here to know more about &nbsp 
-                    <span id="diseasesearch" style="color: crimson;"></span></a>
-              </button>
-        </div>
-          <br><br>
-
-        <div class="text-center">
-          <h4>This tool does not provide medical advice. It is intended for informational purposes only.
-          </h4><h4>It is not a substitute for professional medical advice, diagnosis or treatment. 
-          </h4>
+    <!-- Results Section -->
+    <div id="resultdiv" style="display: none;">
         <br><br>
+        <div class="text-center">
+            <div class="card" id="predicted-data">
+                <div style="margin-bottom: 24px;">
+                    <span class="diseasefield">Patient: {{ user.patient.name }}</span>
+                    <span class="diseasefield" style="margin-left: 32px;">Age: {{ user.patient.age }}</span>
+                </div>
+                
+                <div style="margin: 24px 0;">
+                    <span class="diseasefield">Predicted Disease:</span><br>
+                    <span id="diseasefield"></span>
+                </div>
 
+                <div style="margin: 24px 0;">
+                    <span class="diseasefield">Confidence Score:</span><br><br>
+                    <div class="progress" style="width: 200px; margin: 0 auto;">
+                        <div id="percentage" class="progress-bar" style="width: 0%">0%</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-
-<div class="mx-auto text-center " style="width:350px">
-  
-     
-        <div >  <form action="consult_a_doctor" method="GET">
-            {% csrf_token %} 
-            <button id="consultbtn" type="submit" class="btn btn-primary"> Consult a <span id="consultdoctor"  name="consultdoctor" > </span> doctor</button>
-          </form>
+        <!-- Learn More Button -->
+        <div class="text-center mt-4 mb-4"> 
+            <button class="btn btn-outline-success">
+                <a id="href" href="https://www.google.com/search?q=disease" target="_blank" rel="noopener noreferrer">
+                    Learn more about <span id="diseasesearch"></span> →
+                </a>
+            </button>
         </div>
-      
- 
+
+        <!-- Disclaimer -->
+        <div class="info-card">
+            <h4>⚠️ Medical Disclaimer</h4>
+            <h4>This tool does not provide medical advice. It is intended for informational purposes only.</h4>
+            <h4>It is not a substitute for professional medical advice, diagnosis or treatment.</h4>
+        </div>
+
+        <!-- Consult Doctor Button -->
+        <div class="text-center">
+            <form action="consult_a_doctor" method="GET">
+                {% csrf_token %} 
+                <button id="consultbtn" type="submit" class="btn btn-primary">
+                    👨‍⚕️ Consult a <span id="consultdoctor"></span> Doctor
+                </button>
+            </form>
+        </div>
+    </div>
 </div>
-
-         
-
-</div>
-
-
-
-
-
-
-
-</div>
-
-
-
 {% endblock %}
