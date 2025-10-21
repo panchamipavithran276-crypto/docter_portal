@@ -11,6 +11,7 @@ urlpatterns = [
     path('stress-analysis/', include('stress_analysis.urls')),
     path("", include("chats.urls")),
     
+    
     # Add fallback URLs for common patterns
     path('accounts/sign_in_patient/', RedirectView.as_view(url='/accounts/sign_in_patient', permanent=False)),
     path('accounts/sign_in_doctor/', RedirectView.as_view(url='/accounts/sign_in_doctor', permanent=False)),

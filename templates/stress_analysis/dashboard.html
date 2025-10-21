@@ -123,6 +123,24 @@
     .bg-purple {
         background-color: #6f42c1 !important;
     }
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+    .chart-status {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 100;
+    }
 </style>
 {% endblock %}
 
@@ -152,7 +170,7 @@
                 <h5>Heart Rate Data</h5>
                 <p class="status-badge {{ heart_rate_status }}">{{ heart_rate_status|title }}</p>
                 {% if heart_rate_status == 'missing' %}
-                <button class="btn-fix" data-action="fix-heart-rate">
+                <button class="btn-fix" onclick="fixHeartRatePermissions()">
                     Fix Permissions
                 </button>
                 {% endif %}
@@ -186,7 +204,7 @@
                 <li>✅ Check back tomorrow for your analysis</li>
             </ul>
             
-            <button class="btn-refresh" data-action="refresh-data">
+            <button class="btn-refresh" onclick="refreshData()">
                 🔄 Check for New Data
             </button>
         </div>
@@ -275,8 +293,7 @@
         </div>
     </div>
 
-    <!-- Statistics Cards (Only show when we have real data) -->
-    {% if has_sufficient_data %}
+    <!-- Statistics Cards -->
     <div class="row mb-4" id="statisticsCards">
         <div class="col-md-3">
             <div class="stat-card bg-light">
@@ -307,10 +324,8 @@
             </div>
         </div>
     </div>
-    {% endif %}
 
-    <!-- ANALYSIS SECTION - Only show when we have sufficient real data -->
-    {% if has_sufficient_data %}
+    <!-- ANALYSIS SECTION -->
     <div class="real-analysis">
         <!-- Main Stress Chart -->
         <div class="row mb-4">
@@ -464,7 +479,6 @@
             </div>
         </div>
     </div>
-    {% endif %}
 
     <!-- Quick Actions -->
     <div class="card mt-4">
@@ -503,11 +517,18 @@
         </div>
     </div>
 </div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="text-center">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+        <p class="mt-3">Loading your health data...</p>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1/dist/chartjs-plugin-annotation.min.js"></script>
 <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
 <script>
     // Chart instances
@@ -523,6 +544,7 @@
     // ========== CORE FUNCTIONS ==========
     
     function initDashboard() {
+        console.log('Initializing dashboard...');
         initializeEventListeners();
         loadData();
         updateConnectionStatus();
@@ -535,40 +557,16 @@
         const syncButton = document.getElementById('syncButton');
         const syncDataBtn = document.getElementById('syncDataBtn');
         
-        if (syncButton) {
-            syncButton.addEventListener('click', syncData);
-            console.log('Sync button event listener added');
-        }
-        if (syncDataBtn) {
-            syncDataBtn.addEventListener('click', syncData);
-            console.log('Sync data button event listener added');
-        }
+        if (syncButton) syncButton.addEventListener('click', syncData);
+        if (syncDataBtn) syncDataBtn.addEventListener('click', syncData);
         
         // Refresh data button
         const refreshDataBtn = document.getElementById('refreshDataBtn');
-        if (refreshDataBtn) {
-            refreshDataBtn.addEventListener('click', loadData);
-            console.log('Refresh button event listener added');
-        }
+        if (refreshDataBtn) refreshDataBtn.addEventListener('click', loadData);
         
         // Generate report button
         const generateReportBtn = document.getElementById('generateReportBtn');
-        if (generateReportBtn) {
-            generateReportBtn.addEventListener('click', generateReport);
-            console.log('Generate report button event listener added');
-        }
-        
-        // Fix heart rate permissions buttons
-        const fixHrButtons = document.querySelectorAll('[data-action="fix-heart-rate"]');
-        fixHrButtons.forEach(button => {
-            button.addEventListener('click', fixHeartRatePermissions);
-        });
-        
-        // Refresh buttons in data collection guide
-        const refreshButtons = document.querySelectorAll('[data-action="refresh-data"]');
-        refreshButtons.forEach(button => {
-            button.addEventListener('click', refreshData);
-        });
+        if (generateReportBtn) generateReportBtn.addEventListener('click', generateReport);
     }
 
     function refreshData() {
@@ -578,10 +576,10 @@
     }
 
     function loadData() {
-        console.log('Load data called');
-        showLoadingState();
+        console.log('Loading data...');
+        showLoadingOverlay();
         
-        // Use the comprehensive API endpoint
+        // Load comprehensive analysis data
         fetch('/stress-analysis/api/analysis/')
             .then(response => {
                 if (!response.ok) {
@@ -592,50 +590,45 @@
             .then(data => {
                 console.log('Data loaded successfully:', data);
                 if (!data.error) {
-                    // Only render charts if we have sufficient real data
-                    if (data.has_sufficient_data) {
-                        renderAllCharts(data);
-                        updateStatistics(data);
-                        generateInsights(data);
-                        generateRecommendations(data);
-                    } else {
-                        // Show message about insufficient data
-                        showAlert('ℹ️ Insufficient real data for analysis. Continue using your fitness tracker.', 'info');
-                    }
+                    renderAllCharts(data);
+                    updateStatistics(data);
                     updateDataSources(data.processed_data || []);
                     updateDataStatus(data);
-                    hideLoadingState();
+                    generateInsights(data);
+                    generateRecommendations(data);
                 } else {
                     showError('Failed to load data: ' + data.error);
                 }
             })
             .catch(error => {
                 console.error('Error loading data:', error);
-                showError('Error loading data: ' + error);
-                hideLoadingState();
+                showError('Error loading data: ' + error.message);
+            })
+            .finally(() => {
+                hideLoadingOverlay();
             });
-    }
-
-    function generateReport() {
-        console.log('Generate report called');
-        showAlert('📊 Report generation feature will be implemented soon!', 'info');
-        // Future implementation: Generate PDF report with all charts and insights
     }
 
     function syncData() {
         console.log('Sync data called');
         const syncButton = document.getElementById('syncButton');
-        const originalText = syncButton ? syncButton.textContent : 'Sync Data';
+        const syncDataBtn = document.getElementById('syncDataBtn');
         
         if (syncButton) {
             syncButton.disabled = true;
             syncButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
         }
+        if (syncDataBtn) {
+            syncDataBtn.disabled = true;
+            syncDataBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+        }
+        
+        showLoadingOverlay();
         
         fetch('/stress-analysis/sync-data/', {
             method: 'POST',
             headers: {
-                'X-CSRFToken': getCookie('csrftoken'),
+                'X-CSRFToken': getCSRFToken(),
                 'Content-Type': 'application/json',
             },
         })
@@ -645,7 +638,7 @@
                 showAlert('✅ ' + data.message, 'success');
                 setTimeout(() => {
                     loadData(); // Reload data after sync
-                }, 2000);
+                }, 1000);
             } else {
                 showAlert('❌ Error: ' + data.error, 'danger');
             }
@@ -656,16 +649,58 @@
         .finally(() => {
             if (syncButton) {
                 syncButton.disabled = false;
-                syncButton.innerHTML = originalText;
+                syncButton.innerHTML = '<i class="fas fa-sync"></i> Sync Data';
+            }
+            if (syncDataBtn) {
+                syncDataBtn.disabled = false;
+                syncDataBtn.innerHTML = '<i class="fas fa-sync"></i> Sync Data Now';
+            }
+            hideLoadingOverlay();
+        });
+    }
+
+    function generateReport() {
+        console.log('Generate report called');
+        const generateReportBtn = document.getElementById('generateReportBtn');
+        
+        if (generateReportBtn) {
+            generateReportBtn.disabled = true;
+            generateReportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+        }
+        
+        fetch('/stress-analysis/generate-report/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('📊 ' + data.message, 'success');
+                if (data.report_url) {
+                    // Open report in new tab
+                    window.open(data.report_url, '_blank');
+                }
+            } else {
+                showAlert('❌ Error: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showAlert('❌ Report generation failed: ' + error, 'danger');
+        })
+        .finally(() => {
+            if (generateReportBtn) {
+                generateReportBtn.disabled = false;
+                generateReportBtn.innerHTML = '<i class="fas fa-file-pdf"></i> Generate Report';
             }
         });
     }
 
     function fixHeartRatePermissions() {
-        console.log('Fix heart rate permissions called');
         showAlert('🔧 Redirecting to fix heart rate permissions...', 'info');
-        // In a real implementation, this would redirect to re-authenticate with proper scopes
-        // For now, just show a message
+        // In real implementation, redirect to re-authenticate with proper scopes
         setTimeout(() => {
             showAlert('Please reconnect Google Fit with heart rate permissions enabled.', 'warning');
         }, 1000);
@@ -673,37 +708,39 @@
 
     // ========== HELPER FUNCTIONS ==========
 
-    function showLoadingState() {
-        const overallStatus = document.getElementById('overallStatus');
-        if (overallStatus) {
-            overallStatus.textContent = 'Loading...';
-            overallStatus.className = 'badge bg-secondary';
-        }
+    function showLoadingOverlay() {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.style.display = 'flex';
     }
 
-    function hideLoadingState() {
-        // This will be updated by updateDataStatus
+    function hideLoadingOverlay() {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.style.display = 'none';
     }
 
     function showError(message) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
-        alertDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.connection-status'));
+        showAlert(message, 'danger');
     }
 
     function showAlert(message, type) {
+        // Remove existing alerts
+        const existingAlerts = document.querySelectorAll('.alert-dismissible');
+        existingAlerts.forEach(alert => alert.remove());
+        
         const alertDiv = document.createElement('div');
         alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
         alertDiv.innerHTML = `
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
-        document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.connection-status'));
         
+        // Insert after connection status
+        const connectionStatus = document.querySelector('.connection-status');
+        if (connectionStatus && connectionStatus.parentNode) {
+            connectionStatus.parentNode.insertBefore(alertDiv, connectionStatus.nextSibling);
+        }
+        
+        // Auto remove after 5 seconds
         setTimeout(() => {
             if (alertDiv.parentElement) {
                 alertDiv.remove();
@@ -744,7 +781,9 @@
 
     function updateStatSources(data) {
         const hasRealData = data.has_real_data || false;
-        const sourceBadge = hasRealData ? '<span class="badge bg-success data-source-badge">Real</span>' : '<span class="badge bg-warning data-source-badge">Demo</span>';
+        const sourceBadge = hasRealData ? 
+            '<span class="badge bg-success data-source-badge">Real Data</span>' : 
+            '<span class="badge bg-warning data-source-badge">Demo Data</span>';
         
         const stressSourceEl = document.getElementById('stressSource');
         const hrSourceEl = document.getElementById('hrSource');
@@ -757,11 +796,11 @@
         if (stepsSourceEl) stepsSourceEl.innerHTML = sourceBadge;
     }
 
-    function updateDataSources(stress_data) {
+    function updateDataSources(processed_data) {
         const container = document.getElementById('dataSourcesInfo');
         if (!container) return;
         
-        if (!stress_data || stress_data.length === 0) {
+        if (!processed_data || processed_data.length === 0) {
             container.innerHTML = '<p class="text-muted mb-0">No data available. Connect Google Fit to start tracking.</p>';
             return;
         }
@@ -770,7 +809,7 @@
         let sources = { google_fit: 0, demo: 0 };
         let metrics = { heart_rate: 0, sleep: 0, steps: 0, calories: 0 };
         
-        stress_data.forEach(day => {
+        processed_data.forEach(day => {
             if (day.data_sources) {
                 Object.values(day.data_sources).forEach(source => {
                     sources[source] = (sources[source] || 0) + 1;
@@ -781,7 +820,7 @@
             }
         });
         
-        const totalDays = stress_data.length;
+        const totalDays = processed_data.length;
         const realDataDays = sources.google_fit > 0 ? Math.round(sources.google_fit / 4) : 0; // 4 metrics per day
         
         let html = `
@@ -843,7 +882,6 @@
         renderTrendsChart(data);
     }
 
-    // All chart rendering functions remain the same as your original code
     function renderStressChart(data) {
         const ctx = document.getElementById('stressChart');
         if (!ctx) return;
@@ -868,7 +906,10 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    title: { display: true, text: 'Daily Stress Level Trend' },
+                    title: { 
+                        display: true, 
+                        text: 'Daily Stress Level Trend' + (data.has_real_data ? '' : ' (Demo Data)')
+                    },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
@@ -889,6 +930,8 @@
                 }
             }
         });
+        
+        addChartStatusBadge('stressChart', data.has_real_data);
     }
 
     function renderHeartRateChart(data) {
@@ -915,7 +958,10 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    title: { display: true, text: 'Heart Rate Trend' }
+                    title: { 
+                        display: true, 
+                        text: 'Heart Rate Trend' + (data.has_real_data ? '' : ' (Demo Data)')
+                    }
                 },
                 scales: {
                     y: {
@@ -928,6 +974,8 @@
                 }
             }
         });
+        
+        addChartStatusBadge('heartRateChart', data.has_real_data);
     }
 
     function renderSleepChart(data) {
@@ -952,7 +1000,10 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    title: { display: true, text: 'Sleep Duration Analysis' }
+                    title: { 
+                        display: true, 
+                        text: 'Sleep Duration Analysis' + (data.has_real_data ? '' : ' (Demo Data)')
+                    }
                 },
                 scales: {
                     y: {
@@ -965,6 +1016,8 @@
                 }
             }
         });
+        
+        addChartStatusBadge('sleepChart', data.has_real_data);
     }
 
     function renderStepsChart(data) {
@@ -989,7 +1042,10 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    title: { display: true, text: 'Daily Step Count' }
+                    title: { 
+                        display: true, 
+                        text: 'Daily Step Count' + (data.has_real_data ? '' : ' (Demo Data)')
+                    }
                 },
                 scales: {
                     y: {
@@ -1002,6 +1058,8 @@
                 }
             }
         });
+        
+        addChartStatusBadge('stepsChart', data.has_real_data);
     }
 
     function renderCaloriesChart(data) {
@@ -1031,7 +1089,10 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    title: { display: true, text: 'Calories Burned Trend' }
+                    title: { 
+                        display: true, 
+                        text: 'Calories Burned Trend' + (data.has_real_data ? '' : ' (Demo Data)')
+                    }
                 },
                 scales: {
                     y: {
@@ -1044,6 +1105,8 @@
                 }
             }
         });
+        
+        addChartStatusBadge('caloriesChart', data.has_real_data);
     }
 
     function renderCorrelationChart(data) {
@@ -1081,7 +1144,23 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    title: { display: true, text: 'Stress Correlation Analysis' }
+                    title: { 
+                        display: true, 
+                        text: 'Stress Correlation Analysis' + (data.has_real_data ? '' : ' (Demo Data)')
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed.y;
+                                let interpretation = '';
+                                if (Math.abs(value) >= 0.7) interpretation = ' (Strong)';
+                                else if (Math.abs(value) >= 0.5) interpretation = ' (Moderate)';
+                                else if (Math.abs(value) >= 0.3) interpretation = ' (Weak)';
+                                else interpretation = ' (Very Weak)';
+                                return `Correlation: ${value.toFixed(2)}${interpretation}`;
+                            }
+                        }
+                    }
                 },
                 scales: {
                     y: {
@@ -1092,6 +1171,8 @@
                 }
             }
         });
+        
+        addChartStatusBadge('correlationChart', data.has_real_data);
     }
 
     function renderPatternChart(data) {
@@ -1140,11 +1221,16 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    title: { display: true, text: 'Stress Level Distribution' },
+                    title: { 
+                        display: true, 
+                        text: 'Stress Level Distribution' + (data.has_real_data ? '' : ' (Demo Data)')
+                    },
                     legend: { position: 'bottom' }
                 }
             }
         });
+        
+        addChartStatusBadge('patternChart', data.has_real_data);
     }
 
     function renderTrendsChart(data) {
@@ -1180,7 +1266,10 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    title: { display: true, text: 'Stress vs Activity Trends' }
+                    title: { 
+                        display: true, 
+                        text: 'Stress vs Activity Trends' + (data.has_real_data ? '' : ' (Demo Data)')
+                    }
                 },
                 scales: {
                     y: {
@@ -1199,6 +1288,23 @@
                 }
             }
         });
+        
+        addChartStatusBadge('trendsChart', data.has_real_data);
+    }
+
+    function addChartStatusBadge(chartId, hasRealData) {
+        const chartElement = document.getElementById(chartId);
+        if (chartElement) {
+            // Remove existing badge
+            const existingBadge = chartElement.parentElement.querySelector('.chart-status');
+            if (existingBadge) existingBadge.remove();
+            
+            // Add new badge
+            const badge = document.createElement('div');
+            badge.className = `chart-status badge ${hasRealData ? 'bg-success' : 'bg-warning'}`;
+            badge.textContent = hasRealData ? 'Real Data' : 'Demo Data';
+            chartElement.parentElement.appendChild(badge);
+        }
     }
 
     function calculateCorrelation(array1, array2) {
@@ -1363,235 +1469,12 @@
         ).join('');
     }
 
-    // Individual chart loading functions
-function loadStressChart() {
-    fetch('/stress-analysis/api/stress-chart/')
-        .then(response => response.json())
-        .then(data => {
-            renderStressChart(data);
-            updateChartStatus('stressChart', data.has_real_data);
-        })
-        .catch(error => {
-            console.error('Error loading stress chart:', error);
-        });
-}
-
-function loadHeartRateChart() {
-    fetch('/stress-analysis/api/heart-rate-chart/')
-        .then(response => response.json())
-        .then(data => {
-            renderHeartRateChart(data);
-            updateChartStatus('heartRateChart', data.has_real_data);
-        })
-        .catch(error => {
-            console.error('Error loading heart rate chart:', error);
-        });
-}
-
-function loadSleepChart() {
-    fetch('/stress-analysis/api/sleep-chart/')
-        .then(response => response.json())
-        .then(data => {
-            renderSleepChart(data);
-            updateChartStatus('sleepChart', data.has_real_data);
-        })
-        .catch(error => {
-            console.error('Error loading sleep chart:', error);
-        });
-}
-
-function loadStepsChart() {
-    fetch('/stress-analysis/api/steps-chart/')
-        .then(response => response.json())
-        .then(data => {
-            renderStepsChart(data);
-            updateChartStatus('stepsChart', data.has_real_data);
-        })
-        .catch(error => {
-            console.error('Error loading steps chart:', error);
-        });
-}
-
-function loadCaloriesChart() {
-    fetch('/stress-analysis/api/calories-chart/')
-        .then(response => response.json())
-        .then(data => {
-            renderCaloriesChart(data);
-            updateChartStatus('caloriesChart', data.has_real_data);
-        })
-        .catch(error => {
-            console.error('Error loading calories chart:', error);
-        });
-}
-
-function loadCorrelationChart() {
-    fetch('/stress-analysis/api/correlation-chart/')
-        .then(response => response.json())
-        .then(data => {
-            renderCorrelationChart(data);
-            updateChartStatus('correlationChart', data.has_real_data);
-        })
-        .catch(error => {
-            console.error('Error loading correlation chart:', error);
-        });
-}
-
-function loadPatternChart() {
-    fetch('/stress-analysis/api/pattern-chart/')
-        .then(response => response.json())
-        .then(data => {
-            renderPatternChart(data);
-            updateChartStatus('patternChart', data.has_real_data);
-        })
-        .catch(error => {
-            console.error('Error loading pattern chart:', error);
-        });
-}
-
-function updateChartStatus(chartId, hasRealData) {
-    const chartElement = document.getElementById(chartId);
-    if (chartElement) {
-        const statusBadge = chartElement.parentElement.querySelector('.chart-status');
-        if (!statusBadge) {
-            const badge = document.createElement('div');
-            badge.className = 'chart-status badge ' + (hasRealData ? 'bg-success' : 'bg-warning');
-            badge.style.position = 'absolute';
-            badge.style.top = '10px';
-            badge.style.right = '10px';
-            badge.style.zIndex = '100';
-            badge.textContent = hasRealData ? 'Real Data' : 'Demo Data';
-            chartElement.parentElement.style.position = 'relative';
-            chartElement.parentElement.appendChild(badge);
-        }
-    }
-}
-
-// Update the render functions to accept individual chart data
-function renderStressChart(data) {
-    const ctx = document.getElementById('stressChart');
-    if (!ctx) return;
-    
-    if (stressChart) stressChart.destroy();
-
-    stressChart = new Chart(ctx.getContext('2d'), {
-        type: 'line',
-        data: {
-            labels: data.timestamps,
-            datasets: [{
-                label: 'Stress Level',
-                data: data.stress_levels,
-                borderColor: 'rgb(255, 99, 132)',
-                backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                tension: 0.4,
-                fill: true,
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                title: { 
-                    display: true, 
-                    text: 'Daily Stress Level Trend' + (data.has_real_data ? '' : ' (Demo Data)')
-                }
-            },
-            scales: {
-                y: { beginAtZero: true, max: 100, title: { display: true, text: 'Stress Level (0-100)' } },
-                x: { title: { display: true, text: 'Date' } }
-            }
-        }
-    });
-}
-
-// Similarly update other render functions to show data source in title
-function renderHeartRateChart(data) {
-    const ctx = document.getElementById('heartRateChart');
-    if (!ctx) return;
-    
-    if (heartRateChart) heartRateChart.destroy();
-
-    heartRateChart = new Chart(ctx.getContext('2d'), {
-        type: 'line',
-        data: {
-            labels: data.timestamps,
-            datasets: [{
-                label: 'Heart Rate (BPM)',
-                data: data.heart_rates,
-                borderColor: 'rgb(54, 162, 235)',
-                backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                tension: 0.4,
-                fill: true,
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                title: { 
-                    display: true, 
-                    text: 'Heart Rate Trend' + (data.has_real_data ? '' : ' (Demo Data)')
-                }
-            },
-            scales: {
-                y: { beginAtZero: false, title: { display: true, text: 'BPM' } },
-                x: { title: { display: true, text: 'Date' } }
-            }
-        }
-    });
-}
-
-// Update the loadData function to use individual chart loading
-function loadData() {
-    console.log('Loading all chart data...');
-    showLoadingState();
-    
-    // Load all charts individually
-    loadStressChart();
-    loadHeartRateChart();
-    loadSleepChart();
-    loadStepsChart();
-    loadCaloriesChart();
-    loadCorrelationChart();
-    loadPatternChart();
-    
-    // Also load the comprehensive data for statistics
-    fetch('/stress-analysis/api/analysis/')
-        .then(response => response.json())
-        .then(data => {
-            if (!data.error) {
-                updateStatistics(data);
-                updateDataSources(data.processed_data || []);
-                updateDataStatus(data);
-                
-                if (data.has_sufficient_data) {
-                    generateInsights(data);
-                    generateRecommendations(data);
-                }
-            }
-            hideLoadingState();
-        })
-        .catch(error => {
-            console.error('Error loading comprehensive data:', error);
-            hideLoadingState();
-        });
-}
-
-    // Helper function to get CSRF token
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
+    function getCSRFToken() {
+        const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='))
+            ?.split('=')[1];
+        return cookieValue || '';
     }
 
     // Initialize dashboard when page loads
@@ -1607,20 +1490,4 @@ function loadData() {
         }
     });
 </script>
-
-<style>
-    .bg-purple {
-        background-color: #6f42c1 !important;
-    }
-    .chart-container canvas {
-        max-height: 300px;
-    }
-    .fa-spin {
-        animation: fa-spin 2s infinite linear;
-    }
-    @keyframes fa-spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-</style>
 {% endblock %}

@@ -18,4 +18,5 @@ urlpatterns = [
     path('api/calories-chart/', views.api_calories_chart, name='api_calories_chart'),
     path('api/correlation-chart/', views.api_correlation_chart, name='api_correlation_chart'),
     path('api/pattern-chart/', views.api_pattern_chart, name='api_pattern_chart'),
+    
 ]
