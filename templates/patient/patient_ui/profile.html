@@ -1,118 +1,473 @@
 {% extends "basic.html" %}
 {% load static %}
 
- 
-    {% block head %}
-   
+{% block head %}
+<style>
+:root {
+    --primary-color: #4f46e5;
+    --primary-hover: #4338ca;
+    --success-color: #10b981;
+    --info-color: #3b82f6;
+    --text-dark: #1f2937;
+    --text-light: #6b7280;
+    --bg-light: #f9fafb;
+    --border-color: #e5e7eb;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: var(--bg-light);
+    color: var(--text-dark);
+}
+
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-dark);
+    margin-bottom: 48px;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(320px, 400px) 1fr;
+    gap: 32px;
+    align-items: start;
+}
+
+/* Profile Card */
+.profile-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+}
+
+.profile-card:hover {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+}
+
+.profile-image-container {
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    padding: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.profile-image {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: white;
+    padding: 16px;
+    object-fit: contain;
+}
+
+.profile-info {
+    padding: 32px 24px;
+}
+
+.profile-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+}
+
+.profile-detail {
+    font-size: 0.95rem;
+    color: var(--text-light);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.profile-detail strong {
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.profile-button {
+    width: 100%;
+    padding: 12px 24px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    margin-top: 16px;
+}
+
+.profile-button:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+/* Actions Panel */
+.actions-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.action-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.action-card:hover {
+    border-color: var(--primary-color);
+    transform: translateX(4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.action-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-decoration: none;
+    color: var(--text-dark);
+}
+
+.action-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.action-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.action-text h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--text-dark);
+}
+
+.action-text p {
+    font-size: 0.875rem;
+    color: var(--text-light);
+    margin: 0;
+}
+
+.action-arrow {
+    font-size: 1.25rem;
+    color: var(--text-light);
+    transition: transform 0.3s ease;
+}
+
+.action-card:hover .action-arrow {
+    transform: translateX(4px);
+    color: var(--primary-color);
+}
+
+/* Feedback Button Card */
+.feedback-card {
+    cursor: pointer;
+}
+
+/* Modal Styles */
+.modal-content {
+    border-radius: 16px;
+    border: none;
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    color: white;
+    padding: 24px;
+    border: none;
+}
+
+.modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.modal-header .close {
+    color: white;
+    opacity: 0.9;
+    font-size: 1.75rem;
+    text-shadow: none;
+}
+
+.modal-header .close:hover {
+    opacity: 1;
+}
+
+.modal-body {
+    padding: 32px 24px;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.form-control {
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    outline: none;
+}
+
+.modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-success {
+    background: var(--success-color);
+    border: none;
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-card {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 576px) {
+    .dashboard-container {
+        padding: 24px 16px;
+    }
+    
+    .page-title {
+        font-size: 1.75rem;
+        margin-bottom: 32px;
+    }
+    
+    .profile-info {
+        padding: 24px 20px;
+    }
+    
+    .profile-name {
+        font-size: 1.25rem;
+    }
+    
+    .action-card {
+        padding: 20px;
+    }
+    
+    .action-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+    
+    .action-text h3 {
+        font-size: 1rem;
+    }
+}
+</style>
 {% endblock %}
-
-
-
 
 {% block body %}
 
-
-
-<br>
-<div class="container mt-2 mb-3">
-<center><h2>Patient Profile</h2>
-</center><br>
-
-
-
-
-    <div class="row">
-        <div class="col" >
-
-            <div class="card" style="width:350px">
-                <img class="card-img-top" src="{% static 'homepage/patient.png' %}" alt="Card image" style="width:100%;">
-                <div class="card-body">
-                  <h4 class="card-title">Patient name : {{puser.patient.name}}</h4>
-                  <p class="card-text">Patient ID - {{puser.patient.user_id}}</p>
-                  <p class="card-text">Patient email - {{puser.email}}</p>
-                  <a href="{% url 'pviewprofile' puser.username %}" class="btn btn-primary">View Profile</a>
+<div class="dashboard-container">
+    <h1 class="page-title">Patient Dashboard</h1>
+    
+    <div class="dashboard-grid">
+        <!-- Profile Card -->
+        <div class="profile-card">
+            <div class="profile-image-container">
+                <img class="profile-image" src="{% static 'homepage/patient.png' %}" alt="Patient Profile">
+            </div>
+            <div class="profile-info">
+                <h2 class="profile-name">{{puser.patient.name}}</h2>
+                <div class="profile-detail">
+                    <strong>ID:</strong> {{puser.patient.user_id}}
                 </div>
-              </div>
-
+                <div class="profile-detail">
+                    <strong>Email:</strong> {{puser.email}}
+                </div>
+                <a href="{% url 'pviewprofile' puser.username %}" class="profile-button">
+                    View Full Profile
+                </a>
+            </div>
         </div>
 
+        <!-- Actions Panel -->
+        <div class="actions-panel">
+            <!-- Check Disease -->
+            <div class="action-card">
+                <a href="{% url 'checkdisease' %}" class="action-link">
+                    <div class="action-content">
+                        <div class="action-icon">🏥</div>
+                        <div class="action-text">
+                            <h3>Check Disease</h3>
+                            <p>Analyze your symptoms and get instant predictions</p>
+                        </div>
+                    </div>
+                    <span class="action-arrow">→</span>
+                </a>
+            </div>
 
-        <div class="col" >
-               <div class="row">
+            <!-- Consultation History -->
+            <div class="action-card">
+                <a href="{% url 'pconsultation_history' %}" class="action-link">
+                    <div class="action-content">
+                        <div class="action-icon">📋</div>
+                        <div class="action-text">
+                            <h3>Consultation History</h3>
+                            <p>View your past consultations and reports</p>
+                        </div>
+                    </div>
+                    <span class="action-arrow">→</span>
+                </a>
+            </div>
+
+            <!-- Stress Analysis -->
+            <div class="action-card">
+                <a href="{% url 'stress_analysis:dashboard' %}" class="action-link">
+                    <div class="action-content">
+                        <div class="action-icon">🧘</div>
+                        <div class="action-text">
+                            <h3>Stress Analysis</h3>
+                            <p>Track and manage your stress levels</p>
+                        </div>
+                    </div>
+                    <span class="action-arrow">→</span>
+                </a>
+            </div>
+
+            <!-- Feedback -->
+            <div class="action-card feedback-card" data-toggle="modal" data-target="#myModal-feedback">
+                <div class="action-link">
+                    <div class="action-content">
+                        <div class="action-icon">💬</div>
+                        <div class="action-text">
+                            <h3>Give Feedback</h3>
+                            <p>Share your experience and suggestions</p>
+                        </div>
+                    </div>
+                    <span class="action-arrow">→</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feedback Modal -->
+<div class="modal fade" id="myModal-feedback">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h4 class="modal-title">Share Your Feedback</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
             
-               <a id="links" class="btn btn-outline-info btn-block" href="{% url 'checkdisease' %}">check disease </a><br>
-               </div>
-                
-               <div class="row">
-                <a class="btn btn-outline-info btn-block" href="{% url 'pconsultation_history' %}">view consulation history</a><br>
-                </div>
-
-               <div class="row">
-                <button class="btn btn-outline-info btn-block" data-toggle="modal" data-target="#myModal-feedback">Give feedbacks </button><br>
-                </div>
-               
-
-                <!-- The Modal -->
-  <div class="modal fade" id="myModal-feedback">
-    <div class="modal-dialog modal-xl ">
-      <div class="modal-content">
-      
-        <!-- Modal Header -->
-        <div class="modal-header">
-          <h4 class="modal-title">Feedbacks</h4>
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
-        </div>
-        
-        <!-- Modal body -->
-        <div class="modal-body">
-            <form action="post_feedback" method="POST">   {% csrf_token %}
-              <div class="form-group">
-                <label for="comment">Give feeback:</label>
-                <textarea class="form-control" rows="5" id="feedback" name="feedback"></textarea>
-              </div>
-              
-        </div>
-        
-        <!-- Modal footer -->
-        <div class="modal-footer">
-          <button id="submit" type="submit" class="btn btn-success" data-dismiss="modal" style="color: white;">Submit</button>
-        </div>
-            </form>
-        
-      </div>
-    </div>
-  </div>
-
-               
-
+            <!-- Modal body -->
+            <div class="modal-body">
+                <form action="post_feedback" method="POST">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="feedback">Your Feedback:</label>
+                        <textarea class="form-control" rows="6" id="feedback" name="feedback" placeholder="Tell us about your experience..."></textarea>
+                    </div>
+                    
+                    <!-- Modal footer -->
+                    <div class="modal-footer">
+                        <button id="submit" type="submit" class="btn btn-success">
+                            Submit Feedback
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
+</div>
 
 <script>
-
-
-  $(document).ready(function() {
-
-    $('#submit').click( function(event){
-  
-      $.ajax({
-          url :"{% url 'post_feedback' %}",
-          type : "POST",
-          data : { feedback : $('#feedback').val(),
-          csrfmiddlewaretoken : $('input[name=csrfmiddlewaretoken]').val()
-         },
-  
-          success : function(data){
-              alert(data);
-          }
-      });
-  
-  
-  });
-      
-   });
-
+$(document).ready(function() {
+    $('#submit').click(function(event) {
+        event.preventDefault();
+        
+        const feedbackValue = $('#feedback').val().trim();
+        
+        if (!feedbackValue) {
+            alert('Please enter your feedback before submitting.');
+            return;
+        }
+        
+        $.ajax({
+            url: "{% url 'post_feedback' %}",
+            type: "POST",
+            data: { 
+                feedback: feedbackValue,
+                csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(data) {
+                alert(data);
+                $('#feedback').val('');
+                $('#myModal-feedback').modal('hide');
+            },
+            error: function() {
+                alert('An error occurred. Please try again.');
+            }
+        });
+    });
+});
 </script>
 
-  
 {% endblock %}
