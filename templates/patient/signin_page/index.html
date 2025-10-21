@@ -50,6 +50,9 @@
 					<span class="login100-form-title p-b-49">
 						Login
 					</span>
+									{% if next %}
+					<input type="hidden" name="next" value="{{ next }}">
+				{% endif %}
 
 					<div class="wrap-input100 validate-input m-b-23" data-validate = "Username is reauired">
 						<span class="label-input100">Username</span>
