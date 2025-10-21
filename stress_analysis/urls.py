@@ -9,5 +9,6 @@ urlpatterns = [
     path('google-fit-callback/', views.google_fit_callback, name='google_fit_callback'),
     path('disconnect-google-fit/', views.disconnect_google_fit, name='disconnect_google_fit'),
     path('sync-data/', views.sync_google_fit_data, name='sync_data'),
-    path('api/insights/', views.get_stress_insights, name='get_insights'),
+    path('api/insights/', views.get_stress_insights, name='api_insights'),
+    path('api/analysis/', views.stress_analysis_api, name='api_analysis'),
 ]
