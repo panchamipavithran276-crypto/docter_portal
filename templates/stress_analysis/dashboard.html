@@ -1363,6 +1363,221 @@
         ).join('');
     }
 
+    // Individual chart loading functions
+function loadStressChart() {
+    fetch('/stress-analysis/api/stress-chart/')
+        .then(response => response.json())
+        .then(data => {
+            renderStressChart(data);
+            updateChartStatus('stressChart', data.has_real_data);
+        })
+        .catch(error => {
+            console.error('Error loading stress chart:', error);
+        });
+}
+
+function loadHeartRateChart() {
+    fetch('/stress-analysis/api/heart-rate-chart/')
+        .then(response => response.json())
+        .then(data => {
+            renderHeartRateChart(data);
+            updateChartStatus('heartRateChart', data.has_real_data);
+        })
+        .catch(error => {
+            console.error('Error loading heart rate chart:', error);
+        });
+}
+
+function loadSleepChart() {
+    fetch('/stress-analysis/api/sleep-chart/')
+        .then(response => response.json())
+        .then(data => {
+            renderSleepChart(data);
+            updateChartStatus('sleepChart', data.has_real_data);
+        })
+        .catch(error => {
+            console.error('Error loading sleep chart:', error);
+        });
+}
+
+function loadStepsChart() {
+    fetch('/stress-analysis/api/steps-chart/')
+        .then(response => response.json())
+        .then(data => {
+            renderStepsChart(data);
+            updateChartStatus('stepsChart', data.has_real_data);
+        })
+        .catch(error => {
+            console.error('Error loading steps chart:', error);
+        });
+}
+
+function loadCaloriesChart() {
+    fetch('/stress-analysis/api/calories-chart/')
+        .then(response => response.json())
+        .then(data => {
+            renderCaloriesChart(data);
+            updateChartStatus('caloriesChart', data.has_real_data);
+        })
+        .catch(error => {
+            console.error('Error loading calories chart:', error);
+        });
+}
+
+function loadCorrelationChart() {
+    fetch('/stress-analysis/api/correlation-chart/')
+        .then(response => response.json())
+        .then(data => {
+            renderCorrelationChart(data);
+            updateChartStatus('correlationChart', data.has_real_data);
+        })
+        .catch(error => {
+            console.error('Error loading correlation chart:', error);
+        });
+}
+
+function loadPatternChart() {
+    fetch('/stress-analysis/api/pattern-chart/')
+        .then(response => response.json())
+        .then(data => {
+            renderPatternChart(data);
+            updateChartStatus('patternChart', data.has_real_data);
+        })
+        .catch(error => {
+            console.error('Error loading pattern chart:', error);
+        });
+}
+
+function updateChartStatus(chartId, hasRealData) {
+    const chartElement = document.getElementById(chartId);
+    if (chartElement) {
+        const statusBadge = chartElement.parentElement.querySelector('.chart-status');
+        if (!statusBadge) {
+            const badge = document.createElement('div');
+            badge.className = 'chart-status badge ' + (hasRealData ? 'bg-success' : 'bg-warning');
+            badge.style.position = 'absolute';
+            badge.style.top = '10px';
+            badge.style.right = '10px';
+            badge.style.zIndex = '100';
+            badge.textContent = hasRealData ? 'Real Data' : 'Demo Data';
+            chartElement.parentElement.style.position = 'relative';
+            chartElement.parentElement.appendChild(badge);
+        }
+    }
+}
+
+// Update the render functions to accept individual chart data
+function renderStressChart(data) {
+    const ctx = document.getElementById('stressChart');
+    if (!ctx) return;
+    
+    if (stressChart) stressChart.destroy();
+
+    stressChart = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: data.timestamps,
+            datasets: [{
+                label: 'Stress Level',
+                data: data.stress_levels,
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                tension: 0.4,
+                fill: true,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { 
+                    display: true, 
+                    text: 'Daily Stress Level Trend' + (data.has_real_data ? '' : ' (Demo Data)')
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, max: 100, title: { display: true, text: 'Stress Level (0-100)' } },
+                x: { title: { display: true, text: 'Date' } }
+            }
+        }
+    });
+}
+
+// Similarly update other render functions to show data source in title
+function renderHeartRateChart(data) {
+    const ctx = document.getElementById('heartRateChart');
+    if (!ctx) return;
+    
+    if (heartRateChart) heartRateChart.destroy();
+
+    heartRateChart = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: data.timestamps,
+            datasets: [{
+                label: 'Heart Rate (BPM)',
+                data: data.heart_rates,
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                tension: 0.4,
+                fill: true,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { 
+                    display: true, 
+                    text: 'Heart Rate Trend' + (data.has_real_data ? '' : ' (Demo Data)')
+                }
+            },
+            scales: {
+                y: { beginAtZero: false, title: { display: true, text: 'BPM' } },
+                x: { title: { display: true, text: 'Date' } }
+            }
+        }
+    });
+}
+
+// Update the loadData function to use individual chart loading
+function loadData() {
+    console.log('Loading all chart data...');
+    showLoadingState();
+    
+    // Load all charts individually
+    loadStressChart();
+    loadHeartRateChart();
+    loadSleepChart();
+    loadStepsChart();
+    loadCaloriesChart();
+    loadCorrelationChart();
+    loadPatternChart();
+    
+    // Also load the comprehensive data for statistics
+    fetch('/stress-analysis/api/analysis/')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.error) {
+                updateStatistics(data);
+                updateDataSources(data.processed_data || []);
+                updateDataStatus(data);
+                
+                if (data.has_sufficient_data) {
+                    generateInsights(data);
+                    generateRecommendations(data);
+                }
+            }
+            hideLoadingState();
+        })
+        .catch(error => {
+            console.error('Error loading comprehensive data:', error);
+            hideLoadingState();
+        });
+}
+
     // Helper function to get CSRF token
     function getCookie(name) {
         let cookieValue = null;

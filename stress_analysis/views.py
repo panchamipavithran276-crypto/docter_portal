@@ -521,3 +521,471 @@ def get_demo_analysis_data():
             'calories_points': 0
         }
     })
+# views.py - Add these new API endpoints
+
+@login_required(login_url='/accounts/sign_in_patient')
+def api_stress_chart(request):
+    """API endpoint for stress chart data only"""
+    try:
+        credentials = get_google_fit_credentials(request)
+        
+        if not credentials:
+            return get_demo_stress_data()
+        
+        end_time = timezone.now()
+        start_time = end_time - timedelta(days=7)
+        
+        fit_service = GoogleFitService(credentials)
+        heart_rate_data = fit_service.get_heart_rate_data(start_time, end_time)
+        sleep_data = fit_service.get_sleep_data(start_time, end_time)
+        step_data = fit_service.get_step_count(start_time, end_time)
+        calories_data = fit_service.get_calories_data(start_time, end_time)
+        
+        processed_data = process_health_data(heart_rate_data, sleep_data, step_data, calories_data)
+        
+        if not processed_data:
+            return get_demo_stress_data()
+        
+        timestamps = [data['date'].strftime('%Y-%m-%d') if hasattr(data['date'], 'strftime') else str(data['date']) for data in processed_data]
+        stress_levels = [data['stress_level'] for data in processed_data]
+        
+        return JsonResponse({
+            'timestamps': timestamps,
+            'stress_levels': stress_levels,
+            'has_real_data': any(item.get('has_real_data', False) for item in processed_data),
+            'data_points': len(processed_data)
+        })
+        
+    except Exception as e:
+        print(f"Error in api_stress_chart: {e}")
+        return get_demo_stress_data()
+
+@login_required(login_url='/accounts/sign_in_patient')
+def api_heart_rate_chart(request):
+    """API endpoint for heart rate chart data only"""
+    try:
+        credentials = get_google_fit_credentials(request)
+        
+        if not credentials:
+            return get_demo_heart_rate_data()
+        
+        end_time = timezone.now()
+        start_time = end_time - timedelta(days=7)
+        
+        fit_service = GoogleFitService(credentials)
+        heart_rate_data = fit_service.get_heart_rate_data(start_time, end_time)
+        
+        # If no real heart rate data, use demo
+        if not heart_rate_data:
+            return get_demo_heart_rate_data()
+        
+        # Process heart rate data into daily averages
+        daily_heart_rates = {}
+        for hr_point in heart_rate_data:
+            date = hr_point['timestamp'].date()
+            if date not in daily_heart_rates:
+                daily_heart_rates[date] = []
+            daily_heart_rates[date].append(hr_point['value'])
+        
+        timestamps = []
+        heart_rates = []
+        
+        for i in range(7):
+            date = (timezone.now() - timedelta(days=6-i)).date()
+            timestamps.append(date.strftime('%Y-%m-%d'))
+            if date in daily_heart_rates:
+                heart_rates.append(round(sum(daily_heart_rates[date]) / len(daily_heart_rates[date])))
+            else:
+                # Default heart rate if no data
+                heart_rates.append(72)
+        
+        return JsonResponse({
+            'timestamps': timestamps,
+            'heart_rates': heart_rates,
+            'has_real_data': len(heart_rate_data) > 0,
+            'data_points': len(heart_rate_data)
+        })
+        
+    except Exception as e:
+        print(f"Error in api_heart_rate_chart: {e}")
+        return get_demo_heart_rate_data()
+
+@login_required(login_url='/accounts/sign_in_patient')
+def api_sleep_chart(request):
+    """API endpoint for sleep chart data only"""
+    try:
+        credentials = get_google_fit_credentials(request)
+        
+        if not credentials:
+            return get_demo_sleep_data()
+        
+        end_time = timezone.now()
+        start_time = end_time - timedelta(days=7)
+        
+        fit_service = GoogleFitService(credentials)
+        sleep_data = fit_service.get_sleep_data(start_time, end_time)
+        
+        if not sleep_data:
+            return get_demo_sleep_data()
+        
+        # Process sleep data into daily totals
+        daily_sleep = {}
+        for sleep_session in sleep_data:
+            date = sleep_session['start_time'].date()
+            duration_hours = sleep_session['duration_minutes'] / 60.0
+            if date not in daily_sleep:
+                daily_sleep[date] = 0
+            daily_sleep[date] += duration_hours
+        
+        timestamps = []
+        sleep_durations = []
+        
+        for i in range(7):
+            date = (timezone.now() - timedelta(days=6-i)).date()
+            timestamps.append(date.strftime('%Y-%m-%d'))
+            if date in daily_sleep:
+                sleep_durations.append(round(daily_sleep[date], 1))
+            else:
+                # Default sleep if no data
+                sleep_durations.append(7.0)
+        
+        return JsonResponse({
+            'timestamps': timestamps,
+            'sleep_durations': sleep_durations,
+            'has_real_data': len(sleep_data) > 0,
+            'data_points': len(sleep_data)
+        })
+        
+    except Exception as e:
+        print(f"Error in api_sleep_chart: {e}")
+        return get_demo_sleep_data()
+
+@login_required(login_url='/accounts/sign_in_patient')
+def api_steps_chart(request):
+    """API endpoint for steps chart data only"""
+    try:
+        credentials = get_google_fit_credentials(request)
+        
+        if not credentials:
+            return get_demo_steps_data()
+        
+        end_time = timezone.now()
+        start_time = end_time - timedelta(days=7)
+        
+        fit_service = GoogleFitService(credentials)
+        step_data = fit_service.get_step_count(start_time, end_time)
+        
+        if not step_data:
+            return get_demo_steps_data()
+        
+        # Process step data
+        daily_steps = {}
+        for step_point in step_data:
+            date = step_point['timestamp'].date()
+            if date not in daily_steps:
+                daily_steps[date] = 0
+            daily_steps[date] += step_point['value']
+        
+        timestamps = []
+        steps_data = []
+        
+        for i in range(7):
+            date = (timezone.now() - timedelta(days=6-i)).date()
+            timestamps.append(date.strftime('%Y-%m-%d'))
+            if date in daily_steps:
+                steps_data.append(daily_steps[date])
+            else:
+                # Default steps if no data
+                steps_data.append(8000)
+        
+        return JsonResponse({
+            'timestamps': timestamps,
+            'steps_data': steps_data,
+            'has_real_data': len(step_data) > 0,
+            'data_points': len(step_data)
+        })
+        
+    except Exception as e:
+        print(f"Error in api_steps_chart: {e}")
+        return get_demo_steps_data()
+
+@login_required(login_url='/accounts/sign_in_patient')
+def api_calories_chart(request):
+    """API endpoint for calories chart data only"""
+    try:
+        credentials = get_google_fit_credentials(request)
+        
+        if not credentials:
+            return get_demo_calories_data()
+        
+        end_time = timezone.now()
+        start_time = end_time - timedelta(days=7)
+        
+        fit_service = GoogleFitService(credentials)
+        calories_data = fit_service.get_calories_data(start_time, end_time)
+        
+        if not calories_data:
+            # Estimate from steps if no calorie data
+            step_data = fit_service.get_step_count(start_time, end_time)
+            if step_data:
+                daily_steps = {}
+                for step_point in step_data:
+                    date = step_point['timestamp'].date()
+                    if date not in daily_steps:
+                        daily_steps[date] = 0
+                    daily_steps[date] += step_point['value']
+                
+                timestamps = []
+                calories_data_points = []
+                
+                for i in range(7):
+                    date = (timezone.now() - timedelta(days=6-i)).date()
+                    timestamps.append(date.strftime('%Y-%m-%d'))
+                    if date in daily_steps:
+                        calories_data_points.append(round(daily_steps[date] * 0.04))
+                    else:
+                        calories_data_points.append(320)  # Default based on 8000 steps
+                
+                return JsonResponse({
+                    'timestamps': timestamps,
+                    'calories_data': calories_data_points,
+                    'has_real_data': False,  # Estimated data
+                    'data_points': len(step_data),
+                    'data_source': 'estimated_from_steps'
+                })
+            else:
+                return get_demo_calories_data()
+        
+        # Process real calorie data
+        daily_calories = {}
+        for calorie_point in calories_data:
+            date = calorie_point['timestamp'].date()
+            if date not in daily_calories:
+                daily_calories[date] = 0
+            daily_calories[date] += calorie_point['value']
+        
+        timestamps = []
+        calories_data_points = []
+        
+        for i in range(7):
+            date = (timezone.now() - timedelta(days=6-i)).date()
+            timestamps.append(date.strftime('%Y-%m-%d'))
+            if date in daily_calories:
+                calories_data_points.append(round(daily_calories[date]))
+            else:
+                calories_data_points.append(320)  # Default
+        
+        return JsonResponse({
+            'timestamps': timestamps,
+            'calories_data': calories_data_points,
+            'has_real_data': len(calories_data) > 0,
+            'data_points': len(calories_data)
+        })
+        
+    except Exception as e:
+        print(f"Error in api_calories_chart: {e}")
+        return get_demo_calories_data()
+
+@login_required(login_url='/accounts/sign_in_patient')
+def api_correlation_chart(request):
+    """API endpoint for correlation chart data only"""
+    try:
+        credentials = get_google_fit_credentials(request)
+        
+        if not credentials:
+            return get_demo_correlation_data()
+        
+        end_time = timezone.now()
+        start_time = end_time - timedelta(days=7)
+        
+        fit_service = GoogleFitService(credentials)
+        
+        # Get all data needed for correlations
+        heart_rate_data = fit_service.get_heart_rate_data(start_time, end_time)
+        sleep_data = fit_service.get_sleep_data(start_time, end_time)
+        step_data = fit_service.get_step_count(start_time, end_time)
+        
+        processed_data = process_health_data(heart_rate_data, sleep_data, step_data, [])
+        
+        if not processed_data:
+            return get_demo_correlation_data()
+        
+        stress_levels = [data['stress_level'] for data in processed_data]
+        heart_rates = [data['heart_rate'] for data in processed_data]
+        sleep_durations = [data['sleep_duration'] for data in processed_data]
+        steps_data = [data['steps'] for data in processed_data]
+        
+        # Calculate correlations
+        stress_vs_sleep = calculate_correlation(stress_levels, sleep_durations)
+        stress_vs_activity = calculate_correlation(stress_levels, steps_data)
+        stress_vs_heart_rate = calculate_correlation(stress_levels, heart_rates)
+        
+        return JsonResponse({
+            'correlations': {
+                'stress_vs_sleep': stress_vs_sleep,
+                'stress_vs_activity': stress_vs_activity,
+                'stress_vs_heart_rate': stress_vs_heart_rate
+            },
+            'has_real_data': any(item.get('has_real_data', False) for item in processed_data),
+            'data_points': len(processed_data)
+        })
+        
+    except Exception as e:
+        print(f"Error in api_correlation_chart: {e}")
+        return get_demo_correlation_data()
+
+@login_required(login_url='/accounts/sign_in_patient')
+def api_pattern_chart(request):
+    """API endpoint for stress pattern chart data only"""
+    try:
+        credentials = get_google_fit_credentials(request)
+        
+        if not credentials:
+            return get_demo_pattern_data()
+        
+        end_time = timezone.now()
+        start_time = end_time - timedelta(days=7)
+        
+        fit_service = GoogleFitService(credentials)
+        heart_rate_data = fit_service.get_heart_rate_data(start_time, end_time)
+        sleep_data = fit_service.get_sleep_data(start_time, end_time)
+        step_data = fit_service.get_step_count(start_time, end_time)
+        calories_data = fit_service.get_calories_data(start_time, end_time)
+        
+        processed_data = process_health_data(heart_rate_data, sleep_data, step_data, calories_data)
+        
+        if not processed_data:
+            return get_demo_pattern_data()
+        
+        stress_levels = [data['stress_level'] for data in processed_data]
+        
+        # Categorize stress levels
+        stress_categories = {
+            'Low': 0,
+            'Moderate': 0,
+            'High': 0,
+            'Very High': 0
+        }
+        
+        for stress_level in stress_levels:
+            if stress_level < 25:
+                stress_categories['Low'] += 1
+            elif stress_level < 50:
+                stress_categories['Moderate'] += 1
+            elif stress_level < 75:
+                stress_categories['High'] += 1
+            else:
+                stress_categories['Very High'] += 1
+        
+        return JsonResponse({
+            'stress_categories': stress_categories,
+            'has_real_data': any(item.get('has_real_data', False) for item in processed_data),
+            'data_points': len(processed_data)
+        })
+        
+    except Exception as e:
+        print(f"Error in api_pattern_chart: {e}")
+        return get_demo_pattern_data()
+
+# Demo data functions for each chart
+def get_demo_stress_data():
+    import random
+    timestamps = [(timezone.now() - timedelta(days=6-i)).strftime('%Y-%m-%d') for i in range(7)]
+    stress_levels = [round(random.uniform(30, 70), 1) for _ in range(7)]
+    
+    return JsonResponse({
+        'timestamps': timestamps,
+        'stress_levels': stress_levels,
+        'has_real_data': False,
+        'data_points': 7
+    })
+
+def get_demo_heart_rate_data():
+    import random
+    timestamps = [(timezone.now() - timedelta(days=6-i)).strftime('%Y-%m-%d') for i in range(7)]
+    heart_rates = [random.randint(65, 85) for _ in range(7)]
+    
+    return JsonResponse({
+        'timestamps': timestamps,
+        'heart_rates': heart_rates,
+        'has_real_data': False,
+        'data_points': 7
+    })
+
+def get_demo_sleep_data():
+    import random
+    timestamps = [(timezone.now() - timedelta(days=6-i)).strftime('%Y-%m-%d') for i in range(7)]
+    sleep_durations = [round(random.uniform(5, 9), 1) for _ in range(7)]
+    
+    return JsonResponse({
+        'timestamps': timestamps,
+        'sleep_durations': sleep_durations,
+        'has_real_data': False,
+        'data_points': 7
+    })
+
+def get_demo_steps_data():
+    import random
+    timestamps = [(timezone.now() - timedelta(days=6-i)).strftime('%Y-%m-%d') for i in range(7)]
+    steps_data = [random.randint(5000, 12000) for _ in range(7)]
+    
+    return JsonResponse({
+        'timestamps': timestamps,
+        'steps_data': steps_data,
+        'has_real_data': False,
+        'data_points': 7
+    })
+
+def get_demo_calories_data():
+    import random
+    timestamps = [(timezone.now() - timedelta(days=6-i)).strftime('%Y-%m-%d') for i in range(7)]
+    calories_data = [random.randint(200, 500) for _ in range(7)]
+    
+    return JsonResponse({
+        'timestamps': timestamps,
+        'calories_data': calories_data,
+        'has_real_data': False,
+        'data_points': 7
+    })
+
+def get_demo_correlation_data():
+    import random
+    return JsonResponse({
+        'correlations': {
+            'stress_vs_sleep': round(random.uniform(-0.8, 0.8), 2),
+            'stress_vs_activity': round(random.uniform(-0.8, 0.8), 2),
+            'stress_vs_heart_rate': round(random.uniform(-0.8, 0.8), 2)
+        },
+        'has_real_data': False,
+        'data_points': 7
+    })
+
+def get_demo_pattern_data():
+    import random
+    return JsonResponse({
+        'stress_categories': {
+            'Low': random.randint(1, 3),
+            'Moderate': random.randint(1, 3),
+            'High': random.randint(1, 2),
+            'Very High': random.randint(0, 1)
+        },
+        'has_real_data': False,
+        'data_points': 7
+    })
+
+def calculate_correlation(array1, array2):
+    """Helper function to calculate correlation between two arrays"""
+    n = len(array1)
+    if n != len(array2) or n == 0:
+        return 0
+    
+    sum1 = sum(array1)
+    sum2 = sum(array2)
+    sum1_sq = sum(x*x for x in array1)
+    sum2_sq = sum(x*x for x in array2)
+    p_sum = sum(array1[i] * array2[i] for i in range(n))
+    
+    num = p_sum - (sum1 * sum2 / n)
+    den = ((sum1_sq - sum1*sum1/n) * (sum2_sq - sum2*sum2/n)) ** 0.5
+    
+    return round(num / den, 2) if den != 0 else 0
