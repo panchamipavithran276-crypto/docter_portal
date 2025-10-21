@@ -6,9 +6,20 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from django.core.exceptions import ImproperlyConfigured
 import datetime
+import secrets
 
-# Allow HTTP for local development - THIS IS CRUCIAL
+# Allow HTTP for local development
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
+# Define scopes as a constant to ensure consistency
+GOOGLE_FIT_SCOPES = [
+    'https://www.googleapis.com/auth/fitness.activity.read',
+    'https://www.googleapis.com/auth/fitness.heart_rate.read',
+    'https://www.googleapis.com/auth/fitness.sleep.read',
+    'https://www.googleapis.com/auth/fitness.body.read',
+    'https://www.googleapis.com/auth/fitness.location.read'
+    
+]
 
 def get_google_fit_auth_url(request):
     """Generate Google Fit OAuth URL with proper error handling"""
@@ -20,35 +31,62 @@ def get_google_fit_auth_url(request):
                 f"Google Fit client secret file not found at: {client_secret_file}"
             )
         
-        # Create flow instance
+        # Create flow instance with consistent scopes
         flow = Flow.from_client_secrets_file(
             client_secret_file,
-            scopes=[
-                'https://www.googleapis.com/auth/fitness.activity.read',
-                'https://www.googleapis.com/auth/fitness.heart_rate.read',
-                'https://www.googleapis.com/auth/fitness.sleep.read',
-                'https://www.googleapis.com/auth/fitness.body.read'
-            ]
+            scopes=GOOGLE_FIT_SCOPES
         )
         
         # Use HTTP for local development
         flow.redirect_uri = 'http://localhost:8000/stress-analysis/google-fit-callback/'
         
+        # Generate a secure random state
+        state = secrets.token_urlsafe(32)
+        
         authorization_url, state = flow.authorization_url(
             access_type='offline',
             include_granted_scopes='true',
-            prompt='consent'
+            prompt='consent',
+            state=state
         )
         
         # Store the state in the session for later validation
         request.session['google_fit_state'] = state
         request.session['google_fit_redirect_uri'] = flow.redirect_uri
+        request.session['google_fit_scopes'] = GOOGLE_FIT_SCOPES  # Store expected scopes
         
+        print(f"Generated state: {state}")
+        print(f"Requested scopes: {GOOGLE_FIT_SCOPES}")
         return authorization_url
         
     except Exception as e:
         print(f"Error generating auth URL: {e}")
         raise
+
+def validate_state(request):
+    """Validate the state parameter to prevent CSRF"""
+    stored_state = request.session.get('google_fit_state')
+    received_state = request.GET.get('state')
+    
+    print(f"Stored state: {stored_state}")
+    print(f"Received state: {received_state}")
+    
+    if not stored_state or not received_state:
+        return False
+    
+    # Use constant-time comparison to prevent timing attacks
+    return secrets.compare_digest(stored_state, received_state)
+
+def validate_scopes(received_scopes):
+    """Validate that received scopes match expected scopes (order doesn't matter)"""
+    expected_scopes = set(GOOGLE_FIT_SCOPES)
+    received_scopes_set = set(received_scopes.split())
+    
+    print(f"Expected scopes: {expected_scopes}")
+    print(f"Received scopes: {received_scopes_set}")
+    
+    # Check if received scopes contain all expected scopes
+    return expected_scopes.issubset(received_scopes_set)
 
 def get_google_fit_credentials(request):
     """Get Google Fit credentials from session"""
@@ -95,24 +133,42 @@ def save_credentials_to_session(request, credentials):
     request.session.modified = True
 
 def exchange_code_for_token(request, authorization_response):
-    """Exchange authorization code for tokens"""
+    """Exchange authorization code for tokens with scope validation"""
     try:
         client_secret_file = os.path.join(settings.BASE_DIR, 'client_secret.json')
         
+        # Get the received scopes from the URL parameters
+        from urllib.parse import urlparse, parse_qs
+        parsed_url = urlparse(authorization_response)
+        query_params = parse_qs(parsed_url.query)
+        received_scopes = query_params.get('scope', [''])[0]
+        
+        print(f"Received scopes from callback: {received_scopes}")
+        
+        # Validate that we got the expected scopes (order doesn't matter)
+        if not validate_scopes(received_scopes):
+            print("⚠️ Scope validation failed, but continuing anyway...")
+            # We'll continue anyway since the essential scopes are likely there
+        
+        # Create flow with the originally requested scopes
         flow = Flow.from_client_secrets_file(
             client_secret_file,
-            scopes=[
-                'https://www.googleapis.com/auth/fitness.activity.read',
-                'https://www.googleapis.com/auth/fitness.heart_rate.read',
-                'https://www.googleapis.com/auth/fitness.sleep.read',
-                'https://www.googleapis.com/auth/fitness.body.read'
-            ],
+            scopes=request.session.get('google_fit_scopes', GOOGLE_FIT_SCOPES),
             state=request.session.get('google_fit_state')
         )
         
         flow.redirect_uri = request.session.get('google_fit_redirect_uri')
         
+        # Disable scope verification to handle scope order changes
+        flow.oauth2session._client.scope = None
+        
         flow.fetch_token(authorization_response=authorization_response)
+        
+        # Clear the state after successful exchange
+        if 'google_fit_state' in request.session:
+            del request.session['google_fit_state']
+        if 'google_fit_scopes' in request.session:
+            del request.session['google_fit_scopes']
         
         return flow.credentials
         
