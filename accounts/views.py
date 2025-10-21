@@ -109,37 +109,50 @@ def signup_patient(request):
 
 
 def sign_in_patient(request):
-  
-
     if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
 
-          username =  request.POST.get('username')
-          password =  request.POST.get('password')
- 
-          user = auth.authenticate(username=username,password=password)
+        user = auth.authenticate(username=username, password=password)
 
-          if user is not None :
-             
-              try:
-                 if ( user.patient.is_patient == True ) :
-                     auth.login(request,user)
+        if user is not None:
+            try:
+                if user.patient.is_patient == True:
+                    auth.login(request, user)
+                    request.session['patientusername'] = user.username
 
-                     request.session['patientusername'] = user.username
+                    # Check if there's a pending Google Fit callback
+                    if 'google_fit_callback_data' in request.session:
+                        # Reconstruct the Google Fit callback URL
+                        callback_data = request.session.pop('google_fit_callback_data')
+                        callback_url = f'/stress-analysis/google-fit-callback/?{callback_data}'
+                        return redirect(callback_url)
+                    
+                    # Check if there's a next parameter (from Google OAuth)
+                    next_url = request.POST.get('next') or request.GET.get('next')
+                    if next_url:
+                        return redirect(next_url)
+                    
+                    # Default redirect
+                    return redirect('patient_ui')
 
-                     return redirect('patient_ui')
-               
-              except :
-                  messages.info(request,'invalid credentials')
-                  return redirect('sign_in_patient')
+            except Exception as e:
+                print(f"Login error: {e}")
+                messages.info(request, 'Invalid credentials')
+                return redirect('sign_in_patient')
 
+        else:
+            messages.info(request, 'Invalid credentials')
+            return redirect('sign_in_patient')
 
-          else :
-             messages.info(request,'invalid credentials')
-             return redirect('sign_in_patient')
-
-
-    else :
-      return render(request,'patient/signin_page/index.html')
+    else:
+        # GET request - check for next parameter from Google OAuth
+        next_url = request.GET.get('next', '')
+        context = {}
+        if next_url:
+            context['next'] = next_url
+            
+        return render(request, 'patient/signin_page/index.html', context)
 
 
 def savepdata(request,patientusername):
